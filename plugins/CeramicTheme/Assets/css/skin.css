@@ -1,0 +1,104 @@
+/*
+ * CeramicTheme — брендовая тема Aeva для Kanboard.
+ * Палитра и шрифты перенесены 1:1 из ceramic (public/css/ceramic.css,
+ * src/admin/admin.css): терракота #B7795A, крем #F6F3EF, тёмный #1A1612, Playfair.
+ *
+ * Грузится ПОСЛЕ дефолтного CSS Kanboard (хук template:layout:css в Plugin.php),
+ * поэтому переопределяет его. Где специфичности не хватает — точечный !important.
+ *
+ * ⚠ Селекторы Kanboard могут меняться между версиями. Это рабочий старт под
+ *   рестайл; доводить против ЖИВОГО UI (Settings → Plugins → тема включена),
+ *   удобно через chrome-devtools MCP. Расширять — по образцу aljawaid/KanboardCSS.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap');
+
+:root {
+  --brand-bg:        #F6F3EF; /* кремовый фон */
+  --brand-bg-alt:    #E6DED6;
+  --brand-ink:       #2B2B2B;
+  --brand-ink-muted: #5A524D;
+  --brand-accent:    #B7795A; /* терракота */
+  --brand-accent-hi: #A06845; /* терракота hover */
+  --brand-dark:      #1A1612; /* тёмный (хедер) */
+  --brand-white:     #FFFFFF;
+  --brand-border:    rgba(43, 43, 43, 0.10);
+  --brand-radius:    6px;
+  --brand-font-head: 'Playfair Display', Georgia, serif;
+}
+
+/* --- Фон и базовый текст --- */
+body,
+.page {
+  background: var(--brand-bg) !important;
+  color: var(--brand-ink);
+  font-family: 'Inter', 'Helvetica Neue', system-ui, sans-serif;
+}
+
+/* --- Верхний хедер: тёмный + терракотовая полоса --- */
+.header {
+  background: var(--brand-dark) !important;
+  border-bottom: 3px solid var(--brand-accent);
+}
+.header .title-container a,
+.header .menu a,
+.header .logo a {
+  color: #F1ECE5 !important;
+}
+.header .menu a:hover {
+  color: var(--brand-accent) !important;
+}
+
+/* --- Заголовки: Playfair --- */
+h1, h2, h3,
+.page-header h2,
+.title-container .board-selector-label {
+  font-family: var(--brand-font-head) !important;
+  color: var(--brand-ink);
+  letter-spacing: 0.2px;
+}
+
+/* --- Ссылки --- */
+a { color: var(--brand-accent); }
+a:hover { color: var(--brand-accent-hi); }
+
+/* --- Первичные кнопки → терракота --- */
+.btn-blue,
+button.btn-blue {
+  background: var(--brand-accent) !important;
+  border-color: var(--brand-accent-hi) !important;
+  color: #fff !important;
+}
+.btn-blue:hover {
+  background: var(--brand-accent-hi) !important;
+}
+
+/* --- Карточки задач на доске --- */
+.task-board {
+  background: var(--brand-white) !important;
+  border: 1px solid var(--brand-border) !important;
+  border-left: 4px solid var(--brand-accent);
+  border-radius: var(--brand-radius) !important;
+  box-shadow: 0 1px 3px rgba(43, 43, 43, 0.08);
+}
+
+/* --- Заголовки колонок доски --- */
+table.board th,
+.board-column-header {
+  background: var(--brand-bg-alt) !important;
+  font-family: var(--brand-font-head) !important;
+  color: var(--brand-ink) !important;
+  border-bottom: 2px solid var(--brand-accent);
+}
+
+/* --- Страница логина --- */
+.form-login {
+  background: var(--brand-white);
+  border: 1px solid var(--brand-border);
+  border-radius: var(--brand-radius);
+  box-shadow: 0 8px 30px rgba(43, 43, 43, 0.10);
+}
+.form-login h2 {
+  font-family: var(--brand-font-head) !important;
+  color: var(--brand-accent);
+}

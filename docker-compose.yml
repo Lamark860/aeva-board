@@ -1,0 +1,85 @@
+# aeva-board — Kanboard для цеха Aeva, за общим Traefik на board.aevashop.ru.
+# Отдельный проект (свой репо, свой деплой). Конвенции повторяют ceramic.
+# Деплой: см. scripts/deploy-traefik.sh. Нужен .env (см. .env.example).
+
+services:
+  kanboard:
+    image: ${KANBOARD_IMAGE:-kanboard/kanboard:latest}
+    container_name: aeva-board
+    restart: unless-stopped
+    environment:
+      # Postgres (СУБД → потом удобно тянуть в Grafana). Хост = имя сервиса `db`.
+      DATABASE_URL: postgres://kanboard:${DB_PASSWORD}@db:5432/kanboard
+      # Плагины (в т.ч. наша тема) ведём через git, web-установщик выключен.
+      PLUGIN_INSTALLER: "false"
+    volumes:
+      - kanboard-data:/var/www/app/data        # named volume → нет граблей с правами
+      - ./plugins:/var/www/app/plugins         # bind: наша тема CeramicTheme из git
+    networks:
+      - internal      # доступ к Postgres
+      - proxy         # для общего Traefik
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # busybox wget есть в Alpine-образе Kanboard; если нет — убрать блок,
+      # smoke-проверка всё равно делается curl'ом из deploy-traefik.sh.
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.aevaboard.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.aevaboard.entrypoints=websecure"
+      - "traefik.http.routers.aevaboard.tls=true"
+      - "traefik.http.routers.aevaboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.aevaboard.service=aevaboard"
+      - "traefik.http.services.aevaboard.loadbalancer.server.port=80"
+
+  db:
+    image: postgres:16-alpine
+    container_name: aeva-board-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kanboard
+      POSTGRES_USER: kanboard
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kanboard"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  kanboard-data:
+  postgres-data:
+
+networks:
+  internal:
+  proxy:
+    external: true
