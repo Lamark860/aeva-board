@@ -1,104 +1,182 @@
 /*
- * CeramicTheme — брендовая тема Aeva для Kanboard.
- * Палитра и шрифты перенесены 1:1 из ceramic (public/css/ceramic.css,
- * src/admin/admin.css): терракота #B7795A, крем #F6F3EF, тёмный #1A1612, Playfair.
+ * CeramicTheme — брендовая тема Aeva для Kanboard (v1.2.x).
+ * Палитра и шрифты с витрины aevashop.ru. Грузится поверх дефолтных стилей
+ * (хук template:layout:css). Селекторы выверены по реальному DOM Kanboard.
  *
- * Грузится ПОСЛЕ дефолтного CSS Kanboard (хук template:layout:css в Plugin.php),
- * поэтому переопределяет его. Где специфичности не хватает — точечный !important.
- *
- * ⚠ Селекторы Kanboard могут меняться между версиями. Это рабочий старт под
- *   рестайл; доводить против ЖИВОГО UI (Settings → Plugins → тема включена),
- *   удобно через chrome-devtools MCP. Расширять — по образцу aljawaid/KanboardCSS.
+ * Эстетика: спокойная «керамическая роскошь» — кремовый холст, тёмная
+ * эспрессо-шапка, терракота как единственный острый акцент, Playfair для
+ * крупных заголовков. !important — точечно поверх дефолтов Kanboard;
+ * функциональные классы (draggable / ui-sortable) НЕ трогаем.
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap');
 
 :root {
-  --brand-bg:        #F6F3EF; /* кремовый фон */
-  --brand-bg-alt:    #E6DED6;
+  --brand-bg:        #F6F3EF; /* кремовый холст */
+  --brand-bg-alt:    #EFE9E1;
+  --brand-bg-sunk:   #E6DED6; /* заголовки колонок, утопленные зоны */
   --brand-ink:       #2B2B2B;
   --brand-ink-muted: #5A524D;
   --brand-accent:    #B7795A; /* терракота */
   --brand-accent-hi: #A06845; /* терракота hover */
-  --brand-dark:      #1A1612; /* тёмный (хедер) */
+  --brand-dark:      #1A1612; /* эспрессо — шапка */
+  --brand-cream-txt: #ECE5DB; /* текст на тёмном */
   --brand-white:     #FFFFFF;
   --brand-border:    rgba(43, 43, 43, 0.10);
   --brand-radius:    6px;
+  --brand-shadow:    0 1px 2px rgba(43,43,43,0.05), 0 2px 7px rgba(43,43,43,0.06);
+  --brand-shadow-up: 0 5px 16px rgba(43,43,43,0.13);
   --brand-font-head: 'Playfair Display', Georgia, serif;
 }
 
-/* --- Фон и базовый текст --- */
+/* ---------- Базовый фон и текст ---------- */
 body,
 .page {
   background: var(--brand-bg) !important;
   color: var(--brand-ink);
-  font-family: 'Inter', 'Helvetica Neue', system-ui, sans-serif;
+  font-family: 'Inter','Helvetica Neue',system-ui,sans-serif;
 }
 
-/* --- Верхний хедер: тёмный + терракотовая полоса --- */
-.header {
+/* ---------- ШАПКА (тег <header>) ---------- */
+header {
   background: var(--brand-dark) !important;
-  border-bottom: 3px solid var(--brand-accent);
+  border-bottom: 3px solid var(--brand-accent) !important;
+  padding: 11px 22px !important;
+  box-shadow: 0 1px 14px rgba(26,22,18,0.20);
 }
-.header .title-container a,
-.header .menu a,
-.header .logo a {
-  color: #F1ECE5 !important;
-}
-.header .menu a:hover {
-  color: var(--brand-accent) !important;
-}
-
-/* --- Заголовки: Playfair --- */
-h1, h2, h3,
-.page-header h2,
-.title-container .board-selector-label {
+header .title-container h1 { margin: 0; line-height: 1.25; }
+/* логотип «K B»: кремовый + терракотовая засечка */
+header .logo a {
+  color: var(--brand-cream-txt) !important;
   font-family: var(--brand-font-head) !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+header .logo a span { color: var(--brand-accent) !important; }
+/* название проекта/раздела — Playfair, кремовое */
+header .title,
+header .title a {
+  color: var(--brand-cream-txt) !important;
+  font-family: var(--brand-font-head) !important;
+  font-weight: 600;
+  letter-spacing: .2px;
+}
+/* правое меню (уведомления, +, аватар), селектор проекта, иконки */
+header .menus-container a,
+header .board-selector-container a,
+header .dropdown a,
+header a { color: var(--brand-cream-txt); }
+header .menus-container a:hover,
+header .board-selector-container a:hover,
+header a:hover { color: var(--brand-accent) !important; }
+header .fa { color: var(--brand-cream-txt); }
+header a:hover .fa { color: var(--brand-accent); }
+
+/* ---------- Контейнер страницы ---------- */
+.page { margin: 0 18px !important; padding-top: 8px; }
+
+/* ---------- Заголовки разделов (Playfair) ---------- */
+.page-header h2,
+.page > h2,
+h2.title {
+  font-family: var(--brand-font-head) !important;
+  font-weight: 600;
   color: var(--brand-ink);
-  letter-spacing: 0.2px;
 }
 
-/* --- Ссылки --- */
-a { color: var(--brand-accent); }
-a:hover { color: var(--brand-accent-hi); }
+/* ---------- Сайдбар (настройки / проект) ---------- */
+.sidebar a { color: var(--brand-ink-muted); border-radius: var(--brand-radius); }
+.sidebar a:hover { color: var(--brand-accent); }
+.sidebar li.active a,
+.sidebar .active a {
+  color: var(--brand-ink) !important;
+  border-left: 3px solid var(--brand-accent);
+  font-weight: 600;
+}
 
-/* --- Первичные кнопки → терракота --- */
+/* ---------- Кнопки ---------- */
+.btn {
+  border-radius: var(--brand-radius) !important;
+  border: 1px solid var(--brand-border) !important;
+  background: var(--brand-white);
+  color: var(--brand-ink);
+  transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+.btn:hover { border-color: var(--brand-accent) !important; color: var(--brand-accent); }
 .btn-blue,
-button.btn-blue {
+button.btn-blue,
+.btn.btn-blue {
   background: var(--brand-accent) !important;
   border-color: var(--brand-accent-hi) !important;
   color: #fff !important;
 }
-.btn-blue:hover {
-  background: var(--brand-accent-hi) !important;
-}
+.btn-blue:hover,
+button.btn-blue:hover { background: var(--brand-accent-hi) !important; color:#fff !important; }
 
-/* --- Карточки задач на доске --- */
+/* ---------- Тулбар доски / переключатель видов ---------- */
+.filter-box { background: var(--brand-bg-alt) !important; border-color: var(--brand-border) !important; }
+ul.views a { color: var(--brand-ink-muted); }
+ul.views a:hover { color: var(--brand-accent); }
+ul.views a.active,
+ul.views li.active a { color: var(--brand-ink); font-weight: 600; }
+
+/* ---------- Поля ввода ---------- */
+input[type=text], input[type=password], input[type=email], input[type=number],
+input[type=search], input[type=url], input[type=date], select, textarea {
+  border: 1px solid var(--brand-border) !important;
+  border-radius: var(--brand-radius) !important;
+  background: var(--brand-white);
+  color: var(--brand-ink);
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--brand-accent) !important;
+  box-shadow: 0 0 0 3px rgba(183,121,90,.16) !important;
+  outline: none !important;
+}
+.form-help { color: var(--brand-ink-muted) !important; }
+
+/* ---------- Доска: заголовки колонок ---------- */
+table.board th.board-column-header {
+  background: var(--brand-bg-sunk) !important;
+  border-bottom: 2px solid var(--brand-accent) !important;
+  color: var(--brand-ink);
+  font-weight: 600;
+  padding: 10px 12px !important;
+}
+table.board td[class*="board-column-"] { padding: 10px !important; }
+
+/* ---------- Доска: карточки ---------- */
+/* стороны бордера заданы раздельно, чтобы левая полоса (маркер цвета)
+   не затиралась шорткатом border (прошлый баг) */
 .task-board {
   background: var(--brand-white) !important;
-  border: 1px solid var(--brand-border) !important;
-  border-left: 4px solid var(--brand-accent);
+  border-top:    1px solid var(--brand-border) !important;
+  border-right:  1px solid var(--brand-border) !important;
+  border-bottom: 1px solid var(--brand-border) !important;
+  border-left:   4px solid var(--brand-ink-muted) !important; /* дефолт, перебивается цветом ниже */
   border-radius: var(--brand-radius) !important;
-  box-shadow: 0 1px 3px rgba(43, 43, 43, 0.08);
+  box-shadow: var(--brand-shadow);
+  padding: 9px 11px !important;
+  transition: box-shadow .15s ease, transform .08s ease;
 }
+.task-board:hover { box-shadow: var(--brand-shadow-up); transform: translateY(-1px); }
+.task-board-title a, .task-board a { color: var(--brand-ink); }
+.task-board a:hover { color: var(--brand-accent); }
 
-/* --- Заголовки колонок доски --- */
-table.board th,
-.board-column-header {
-  background: var(--brand-bg-alt) !important;
-  font-family: var(--brand-font-head) !important;
-  color: var(--brand-ink) !important;
-  border-bottom: 2px solid var(--brand-accent);
-}
-
-/* --- Страница логина --- */
-.form-login {
-  background: var(--brand-white);
-  border: 1px solid var(--brand-border);
-  border-radius: var(--brand-radius);
-  box-shadow: 0 8px 30px rgba(43, 43, 43, 0.10);
-}
-.form-login h2 {
-  font-family: var(--brand-font-head) !important;
-  color: var(--brand-accent);
-}
+/* цветовая маркировка Kanboard → тонкая левая полоса на чистой карточке */
+.task-board.color-yellow      { border-left-color:#D9A521 !important; }
+.task-board.color-amber       { border-left-color:#D9961C !important; }
+.task-board.color-orange      { border-left-color:#E08A3C !important; }
+.task-board.color-deep_orange { border-left-color:#D2622A !important; }
+.task-board.color-red         { border-left-color:#C0503E !important; }
+.task-board.color-pink        { border-left-color:#CC7DA0 !important; }
+.task-board.color-purple      { border-left-color:#8E6FB3 !important; }
+.task-board.color-blue        { border-left-color:#3E7CB1 !important; }
+.task-board.color-cyan        { border-left-color:#3E9DB1 !important; }
+.task-board.color-teal        { border-left-color:#3E9D90 !important; }
+.task-board.color-green       { border-left-color:#5AA06B !important; }
+.task-board.color-light_green { border-left-color:#7FB36B !important; }
+.task-board.color-lime        { border-left-color:#9DAE45 !important; }
+.task-board.color-brown       { border-left-color:#A0764F !important; }
+.task-board.color-grey        { border-left-color:#9AA0A6 !important; }
+.task-board.color-dark_grey   { border-left-color:#6B7177 !important; }
