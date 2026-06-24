@@ -24,7 +24,7 @@ services:
     healthcheck:
       # busybox wget есть в Alpine-образе Kanboard; если нет — убрать блок,
       # smoke-проверка всё равно делается curl'ом из deploy-traefik.sh.
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
