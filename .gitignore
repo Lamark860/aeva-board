@@ -7,3 +7,7 @@
 # мусор
 *.log
 .DS_Store
+
+# внутренняя дока (локальная, как _local_docs в ceramic) — в публичный репо не светим
+/CLAUDE.md
+/_local_docs/
