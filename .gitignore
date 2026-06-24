@@ -8,6 +8,9 @@
 *.log
 .DS_Store
 
+# локальная разработка темы (Docker-оверрайд с проброшенным портом) — только локально, на VPS не нужен
+/docker-compose.override.yml
+
 # внутренняя дока (локальная, как _local_docs в ceramic) — в публичный репо не светим
 /CLAUDE.md
 /_local_docs/

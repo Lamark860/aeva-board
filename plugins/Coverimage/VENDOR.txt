@@ -1,0 +1,5 @@
+Vendored 3rd-party plugin.
+Source: https://github.com/TimoStahl/kanboard_plugin_coverimage
+Pinned commit: 89f4cfb244159172a6ec08b5508f9629b2037d85
+Version: 1.2.15.0  (compatible: Kanboard >=1.2.14)
+To update: re-clone, diff, re-vendor.

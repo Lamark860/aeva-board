@@ -15,8 +15,14 @@ class Plugin extends Base
 {
     public function initialize()
     {
+        // CSS-тема (грузится последней, переопределяет дефолтные стили Kanboard).
         $this->hook->on('template:layout:css', array(
             'template' => 'plugins/CeramicTheme/Assets/css/skin.css',
+        ));
+
+        // Лёгкий JS-слой UX-доводок (например, закрытие модалки по клику на фон).
+        $this->hook->on('template:layout:js', array(
+            'template' => 'plugins/CeramicTheme/Assets/js/theme.js',
         ));
     }
 

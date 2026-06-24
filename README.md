@@ -11,9 +11,11 @@ Traefik, что и остальные проекты на VPS. Нового до
 
 ## Что внутри
 - `docker-compose.yml` — `kanboard` (порт 80, за Traefik) + `db` (PostgreSQL 16).
-- `plugins/CeramicTheme/` — брендовая тема (Playfair + терракота, палитра витрины aevashop.ru),
-  монтируется в контейнер; правится в git, не из web-UI.
+- `plugins/CeramicTheme/` — брендовая тема Aeva (Playfair + терракота, палитра витрины aevashop.ru):
+  CSS на все экраны + лёгкий JS (закрытие модалки по клику на фон). Правится в git, не из web-UI.
+- `plugins/Coverimage/` — сторонний плагин (vendored): картинка-обложка на карточке доски.
 - `scripts/deploy-traefik.sh` — деплой (pull → up → smoke-проверка HTTPS).
+- `scripts/update.sh` — обновление кода/темы/плагинов на VPS (`git pull` с обходом прав).
 - `.env.example` — шаблон конфигурации.
 
 ## Требования
@@ -50,9 +52,10 @@ bash scripts/deploy-traefik.sh
 - Отдельный проект **«Задачи мастерской»** (To do / В работе / Готово) — поручения команде.
 
 ## Тема
-Плагин `CeramicTheme` подхватывается автоматически. Палитра и шрифт — в
-`plugins/CeramicTheme/Assets/css/skin.css` (терракота `#B7795A`, крем `#F6F3EF`, Playfair).
-Точные селекторы доводятся против живого UI — это рабочий старт, не финальный пиксель-перфект.
+Плагин `CeramicTheme` подхватывается автоматически — брендовый редизайн всех экранов (вход,
+дашборд, доска, карточка задачи, модалки, формы, список). Палитра и шрифт — в
+`plugins/CeramicTheme/Assets/css/skin.css` (терракота `#B7795A`, крем `#F6F3EF`, Playfair Display +
+Inter). После правок CSS — обнови страницу с очисткой кэша (Ctrl+Shift+R).
 
 ## Grafana (следующий шаг, не входит в базовый деплой)
 Kanboard на PostgreSQL → подключается напрямую:
