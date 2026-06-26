@@ -1,34 +1,48 @@
-# aeva-board — Kanboard для цеха Aeva, за общим Traefik на board.aevashop.ru.
-# Отдельный проект (свой репо, свой деплой). Конвенции повторяют ceramic.
+# aeva-board — Vikunja для цеха Aeva, за общим Traefik на board.aevashop.ru.
+# Мигрировано с Kanboard (ветка vikunja). Откат на Kanboard — ветка master.
 # Деплой: см. scripts/deploy-traefik.sh. Нужен .env (см. .env.example).
 
 services:
-  kanboard:
-    image: ${KANBOARD_IMAGE:-kanboard/kanboard:latest}
+  # Образ vikunja distroless (нет shell) и бежит под uid 1000. Пустой named-том
+  # files создаётся root'ом → Vikunja не может в него писать. Этот one-shot чинит
+  # права ДО старта, поэтому само приложение бежит непривилегированно (не root).
+  vikunja-init:
+    image: alpine:3
+    command: sh -c "mkdir -p /files && chown -R 1000:0 /files && chmod -R g+rwX /files"
+    volumes:
+      - vikunja-files:/files
+    networks:
+      - internal
+    restart: "no"
+
+  vikunja:
+    image: ${VIKUNJA_IMAGE:-vikunja/vikunja:latest}
     container_name: aeva-board
     restart: unless-stopped
     environment:
-      # Postgres (СУБД → потом удобно тянуть в Grafana). Хост = имя сервиса `db`.
-      DATABASE_URL: postgres://kanboard:${DB_PASSWORD}@db:5432/kanboard
-      # Плагины (в т.ч. наша тема) ведём через git, web-установщик выключен.
-      PLUGIN_INSTALLER: "false"
+      VIKUNJA_SERVICE_PUBLICURL: "https://${DOMAIN}/"
+      VIKUNJA_SERVICE_SECRET: "${VIKUNJA_SECRET}"
+      VIKUNJA_SERVICE_TIMEZONE: "Europe/Moscow"
+      # Публичная регистрация: на проде false (юзеров заводим CLI/админом).
+      VIKUNJA_SERVICE_ENABLEREGISTRATION: "${VIKUNJA_REGISTRATION:-false}"
+      VIKUNJA_DATABASE_TYPE: postgres
+      VIKUNJA_DATABASE_HOST: db
+      VIKUNJA_DATABASE_USER: vikunja
+      VIKUNJA_DATABASE_PASSWORD: "${DB_PASSWORD}"
+      VIKUNJA_DATABASE_DATABASE: vikunja
+      VIKUNJA_FILES_BASEPATH: /app/vikunja/files
     volumes:
-      - kanboard-data:/var/www/app/data        # named volume → нет граблей с правами
-      - ./plugins:/var/www/app/plugins         # bind: наша тема CeramicTheme из git
+      - vikunja-files:/app/vikunja/files   # named volume → персистентные вложения
     networks:
       - internal      # доступ к Postgres
       - proxy         # для общего Traefik
     depends_on:
+      vikunja-init:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
-    healthcheck:
-      # busybox wget есть в Alpine-образе Kanboard; если нет — убрать блок,
-      # smoke-проверка всё равно делается curl'ом из deploy-traefik.sh.
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+    # БЕЗ Docker-healthcheck: в образе нет shell/wget. Здоровье проверяет сам Traefik
+    # (label loadbalancer.healthcheck ниже) + smoke-curl в deploy-traefik.sh.
     deploy:
       resources:
         limits:
@@ -46,22 +60,26 @@ services:
       - "traefik.http.routers.aevaboard.tls=true"
       - "traefik.http.routers.aevaboard.tls.certresolver=letsencrypt"
       - "traefik.http.routers.aevaboard.service=aevaboard"
-      - "traefik.http.services.aevaboard.loadbalancer.server.port=80"
+      - "traefik.http.services.aevaboard.loadbalancer.server.port=3456"
+      # Traefik сам HTTP-пробит Vikunja (бинарь в контейнере не нужен):
+      - "traefik.http.services.aevaboard.loadbalancer.healthcheck.path=/api/v1/info"
+      - "traefik.http.services.aevaboard.loadbalancer.healthcheck.interval=15s"
+      - "traefik.http.services.aevaboard.loadbalancer.healthcheck.timeout=5s"
 
   db:
     image: postgres:16-alpine
     container_name: aeva-board-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: kanboard
-      POSTGRES_USER: kanboard
+      POSTGRES_DB: vikunja
+      POSTGRES_USER: vikunja
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - vikunja-db:/var/lib/postgresql/data   # отдельный том (НЕ kanboard postgres-data)
     networks:
       - internal
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kanboard"]
+      test: ["CMD-SHELL", "pg_isready -U vikunja"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -76,8 +94,8 @@ services:
         max-file: "3"
 
 volumes:
-  kanboard-data:
-  postgres-data:
+  vikunja-files:
+  vikunja-db:
 
 networks:
   internal:
